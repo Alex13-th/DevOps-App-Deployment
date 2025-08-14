@@ -1,12 +1,13 @@
 todoapp:
   image:
     repository: ghcr.io/alex13-th/devops-app
-    tag: "sha-90f2508d84e88f8b28b48da291ef0dd4a200c34c"
+    tag: "sha-680127a976f28bc44054188346e9442342c11881"
     pullPolicy: IfNotPresent
     pullSecrets: ghcr-secret
 
 appLabel: todoapp
 namespace: todoapp-web-ns
+createNamespace: false
 containerName: todoapp
 replicaCount: 2 # one source of truth for deployment and hpa
 
@@ -15,6 +16,9 @@ strategy:
   rollingUpdate:
     maxUnavailable: 1
     maxSurge: 1
+
+ingress:
+  host: todoapp.local
 
 serviceAccount:
   create: false
