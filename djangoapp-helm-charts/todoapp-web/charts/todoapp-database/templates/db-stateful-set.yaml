@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db-stateful-set
+  namespace: {{.Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{.Values.appLabel}}
+  serviceName: {{.Values.service.serviceName}}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{.Values.appLabel}}
+    spec:
+      containers:
+      - name: {{.Values.appLabel}}-container
+        image: "{{.Values.database.image}}:{{.Values.database.tag}}"
+        ports:
+        - containerPort: 3306
+          name: {{.Values.database.portName}}
+        envFrom:
+        - secretRef:
+            name: {{.Values.appLabel}}-secrets
+        volumeMounts:
+        - name: user-data
+          mountPath: /var/lib/mysql
+        - name: mysql-init-script
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        livenessProbe:
+          exec:
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+          initialDelaySeconds: {{.Values.livenessProbe.initialDelaySeconds}}
+          periodSeconds: {{.Values.livenessProbe.periodSeconds}}
+          timeoutSeconds: {{.Values.livenessProbe.timeoutSeconds}}
+          failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+        readinessProbe:
+          exec:
+            command: ["mysqladmin", "ping", "-h", "127.0.0.1"]
+          initialDelaySeconds: {{.Values.readinessProbe.initialDelaySeconds}}
+          periodSeconds: {{.Values.readinessProbe.periodSeconds}}
+          timeoutSeconds: {{.Values.readinessProbe.timeoutSeconds}}
+          failureThreshold: {{.Values.readinessProbe.failureThreshold}}
+      volumes:
+      - name: mysql-init-script
+        configMap:
+          name: {{.Values.appLabel}}-configmap
+  volumeClaimTemplates:
+  - metadata:
+      name: user-data
+    spec:
+      storageClassName: {{.Values.volumeClaimTemplates.spec.storageClassName}}
+      accessModes:
+        {{- range .Values.volumeClaimTemplates.spec.accessModes }}
+        - {{ . }}
+        {{- end }}
+      resources:
+        requests:
+          storage: {{.Values.volumeClaimTemplates.spec.resources.requests.storage}}
+

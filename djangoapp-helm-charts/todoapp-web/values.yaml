@@ -126,7 +126,7 @@ pv:
 pvc:
   spec:
     accessModes:
-      - ReadWriteOnce # while we at single node cluster 
+      - ReadWriteOnce # while we at single node cluster
     resources:
       requests:
         storage: 512Mi
@@ -144,5 +144,6 @@ secrets:
 # todoapp-vpa
 
 vpa:
+  enabled: false
   updatePolicy:
     updateMode: "Off"

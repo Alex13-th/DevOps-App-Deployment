@@ -1,0 +1,40 @@
+namespace: db-ns
+appLabel: mysql-db
+
+database:
+  image: mysql
+  tag: "8.0"
+  portName: mysql-database
+
+service:
+  serviceName: mysql-headless-service
+
+
+
+livenessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+secrets:
+  rootPassword: devpassword123
+  user: app_user
+  password: devpassword123
+  database: app_db
+
+volumeClaimTemplates:
+    spec:
+      storageClassName: standard
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+
+
