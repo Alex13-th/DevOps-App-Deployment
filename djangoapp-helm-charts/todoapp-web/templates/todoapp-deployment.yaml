@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todoapp-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  strategy:
+    type: {{ .Values.strategy.type }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{.Values.appLabel}}-web
+  template:
+    metadata:
+      labels:
+        app: {{.Values.appLabel}}-web
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      containers:
+        - name: {{.Values.containerName}}
+          image: "{{ .Values.todoapp.image.repository}}:{{ .Values.todoapp.image.tag }}"
+          imagePullPolicy: {{ .Values.todoapp.image.pullPolicy }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: {{.Values.appLabel}}-data-storage
+              mountPath: {{ .Values.persistence.mountPath }}
+          {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.envFrom.secrets }}
+            - configMapRef:
+                name: {{ .Values.envFrom.configMaps }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+      imagePullSecrets:
+        - name: {{ .Values.todoapp.image.pullSecrets }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: {{.Values.appLabel}}-data-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+      {{- end }}

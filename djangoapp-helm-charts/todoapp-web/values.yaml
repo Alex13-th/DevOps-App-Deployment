@@ -1,0 +1,148 @@
+todoapp:
+  image:
+    repository: ghcr.io/alex13-th/devops-app
+    tag: "sha-90f2508d84e88f8b28b48da291ef0dd4a200c34c"
+    pullPolicy: IfNotPresent
+    pullSecrets: ghcr-secret
+
+appLabel: todoapp
+namespace: todoapp-web-ns
+containerName: todoapp
+replicaCount: 2 # one source of truth for deployment and hpa
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+serviceAccount:
+  create: false
+  name: todoapp-sa
+
+terminationGracePeriodSeconds: 30
+
+containerPort: 8080
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "512m"
+  limits:
+    memory: "512Mi"
+    cpu: "768m"
+
+
+envFrom:
+  secrets: todoapp-secrets
+  configMaps: todoapp-configs
+
+probes:
+  liveness:
+    path: /api/health
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 4
+  readiness:
+    path: /api/ready
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+persistence:
+  enabled: true
+  existingClaim: todoapp-pvc-data
+  mountPath: /app/data
+
+
+# todoapp-cluster-ip
+
+service:
+  port: 80
+  targetPort: 8080
+
+# todoapp-configmap
+configMap:
+  data:
+    DB_ENGINE: "django.db.backends.mysql"
+    DB_NAME: "app_db"
+    DB_HOST: "mysql-headless-service.db-ns.svc"
+    DB_PORT: "3306"
+
+
+# todoapp-hpa
+
+hpa:
+  maxReplicas: 6
+
+  metrics:
+    cpu:
+      type: Utilization
+      averageUtilization: 50
+    memory:
+      type: Utilization
+      averageUtilization: 50
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+
+
+# todoapp-pdb
+
+pdb:
+  spec:
+    minAvailable: 1
+
+
+# todoapp-pv
+
+pv:
+  name: todoapp-pv-data
+
+  spec:
+    storageClassName: standard   #one source of truth for pv and pvc
+    persistentVolumeReclaimPolicy: Delete
+    accessModes:
+      - ReadWriteOnce
+    capacity:
+      storage: 512Mi
+    hostPath:
+      path: /data/
+
+
+# todoapp-pvc
+
+pvc:
+  spec:
+    accessModes:
+      - ReadWriteOnce # while we at single node cluster 
+    resources:
+      requests:
+        storage: 512Mi
+
+# todoapp-secrets
+
+secrets:
+  type: Opaque
+  stringData:
+    SECRET_KEY: "@e2(yx)X&tgh3_s=0yja-h!dpebxsx^dg47x)-k&kq_3zjf*9e*"
+    DB_PASSWORD: "devpassword123"
+    DB_USER: "app_user"
+
+
+# todoapp-vpa
+
+vpa:
+  updatePolicy:
+    updateMode: "Off"

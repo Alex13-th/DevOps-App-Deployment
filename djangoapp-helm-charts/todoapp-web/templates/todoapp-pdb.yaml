@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{.Values.appLabel}}-pdb
+  namespace: {{ .Values.namespace }}
+spec:
+  minAvailable: {{ .Values.pdb.spec.minAvailable }}
+  selector:
+    matchLabels:
+      app: {{.Values.appLabel}}-web
