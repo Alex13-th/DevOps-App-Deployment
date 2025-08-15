@@ -6,6 +6,8 @@ on:
     branches: [ develop ]
 
 env:
+  IMAGE_REPO: ghcr.io/alex13-th/devops-app
+  IMAGE_TAG: sha-680127a976f28bc44054188346e9442342c11881
   CHART_PATH: ./djangoapp-helm-charts/todoapp-web
   VALUES_CI: ./djangoapp-helm-charts/overlays/ci/values-ci.yaml
   APP_NS: todoapp-web-ns
@@ -58,8 +60,19 @@ jobs:
         with:
           cluster_name: helm-ci
 
+      - name: Clean lock & deps
+        run: |
+          rm -f "${CHART_PATH}/Chart.lock"
+          helm dependency update "${CHART_PATH}"
+
       - name: Create namespace
         run: kubectl create ns "${APP_NS}"
+
+      - name: Pull image (public)
+        run: docker pull ${IMAGE_REPO}:${IMAGE_TAG}
+
+      - name: Load image into Kind
+        run: kind load docker-image ${IMAGE_REPO}:${IMAGE_TAG} --name helm-ci
 
       # У CI-оверлеї повинні бути: replicaCount=1, persistence.enabled=false,
       # monitoring.serviceMonitor.enabled=false, monitoring.rules.enabled=false
@@ -67,6 +80,9 @@ jobs:
         run: |
           helm upgrade --install todoapp "${CHART_PATH}" \
             -n "${APP_NS}" -f "${VALUES_CI}" \
+            --set todoapp.image.repository=${IMAGE_REPO} \
+            --set todoapp.image.tag=${IMAGE_TAG} \
+            --set todoapp.image.pullPolicy=IfNotPresent \
             --atomic --timeout 10m
 
       - name: Wait for deployment to be Ready
