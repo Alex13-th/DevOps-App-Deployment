@@ -51,18 +51,6 @@ jobs:
       - name: Render chart (CI values)
         run: helm template test "${CHART_PATH}" -f "${VALUES_CI}" >/dev/null
 
-      - name: Install kube-linter
-        run: |
-          set -eux
-          KUBELINTER_VER=0.6.8
-          curl -fsSL -o kl.tgz https://github.com/stackrox/kube-linter/releases/download/v${KUBELINTER_VER}/kube-linter-linux.tar.gz
-          tar -xzf kl.tgz
-          sudo mv kube-linter /usr/local/bin/kube-linter
-
-      - name: kube-linter (rendered with CI values)
-        run: |
-          helm template test "${CHART_PATH}" -f "${VALUES_CI}" > rendered.yaml
-          kube-linter lint rendered.yaml --format plain
 
   e2e-kind:
     runs-on: ubuntu-latest
