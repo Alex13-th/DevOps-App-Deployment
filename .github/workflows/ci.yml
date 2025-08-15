@@ -10,7 +10,7 @@ on:
       - 'overlays/**'
       - 'Bootstrap.sh'
       - 'script.sh'
-      - '.github/workflows/helm-ci.yml'
+      - '.github/workflows/ci.yml'
       - '!**/*.md'
 
 concurrency:
