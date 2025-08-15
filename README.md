@@ -1,72 +1,79 @@
-# Bootstrap.sh verification
+# Local deployment of Django TodoApp + DB + monitoring (Helm/K8s/Prometheus) and simple CI on GitHub Actions.
+This repository contains the infrastructure for deploying and testing Django App in Kubernetes. It uses a Helm chart for the web service with a sub-chart for the database, monitoring based on kube-prometheus-stack (Prometheus/Grafana/Alertmanager), local scripts for quick start (Bootstrap + deploy), and simple CI in GitHub Actions (lint/chart render, kube‑linter, e2e‑smoke in kind with image preload). The goal is a reproducible local experience and a direct path to the cloud through values overlays (dev/ci/staging/prod).
 
-minikube addons list -> metrics-server and ingress Ready
-ping todoapp.local ->
-kubectl get nodes -> Ready
-kubectl get pods -A -> system pods running
+## Requirements
 
-
-
-
-
+- `kubectl` ≥ 1.28
+- `Helm` ≥ 3.14
+- Minikube (for local) or any compatible K8s cluster
+- Docker (for building/loading images)
 
 
-# DevOps-App-Deployment
+## Quick start (locally)
+
+1) Cluster and add-ons
+
+```bash
+chmod +x Bootstrap.sh
+./Bootstrap.sh
+```
+
+2) Deploy the application and monitoring
+
+```bash
+chmod +x script.sh
+./script.sh
+```
+
+The script does the following:
+
+- creates the todoapp-web-ns and monitoring namespaces;
+- sets up kube-prometheus-stack (CRD for ServiceMonitor/PrometheusRule);
+- sets up the application chart;
+
+- Runs port forwarding:
+  - App → http://localhost:8080
+  - Prometheus → http://localhost:9090
+  - Grafana → http://localhost:3000
+  - Alertmanager → http://localhost:9093
+
+
+## CI (GitHub Actions)
+
+1) Helm Validate
+
+- Helm dependency update, helm lint.
+- Helm template (base + CI overlay).
+- Path filters only trigger on chart/overlays/scripts changes
+- Сoncurrency cancels in-progress runs for the same branch/PR
+
+2) e2e-kind
+
+- Creates a kind cluster.
+- Preloads the docker image into the kind node.
+- Installs the chart from overlays/ci/values-ci.yaml (persistence=false, hpa=false, serviceMonitor=false, rules=false).
+- Waits for the Deployment to be Ready, then performs a /api/health smoke check
+
+
+## Clean up
+
+1) Soft delete (remove releases and NS)
+```bash
+helm uninstall todoapp -n todoapp-web-ns || true
+helm uninstall monitoring -n monitoring || true
+kubectl delete ns todoapp-web-ns monitoring || true
+```
+
+2) Hard (remove Minikube profile)
+```bash
+minikube delete -p todoapp
+```
 
 
 
-helm install todoapp ./djangoapp-helm-charts/todoapp-web   -n todoapp-web-ns   --create-namespace   --dry-run   --debug
 
 
 
 
-# якщо образ у GHCR (приватний):
-kubectl create secret docker-registry ghcr-secret \
-  --docker-server=ghcr.io \
-  --docker-username=alex13-th \
-  --docker-password=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 \
-  -n todoapp-web-ns
 
 
-
-
-minikube addons enable ingress
-minikube addons enable metrics-server
-
-
-
-CHART=./djangoapp-helm-charts/todoapp-web
-REL=todoapp
-NS=todoapp-web-ns
-
-helm install "$REL" "$CHART" -n "$NS" --create-namespace --dry-run --debug
-
-
-
-# real instal
-
-helm install todoapp ./djangoapp-helm-charts/todoapp-web -n todoapp-web-ns --create-namespace
-
-
-validate
-
-kubectl get pods -n todoapp-web-ns
-kubectl get pods -n db-ns
-kubectl get pvc -n todoapp-web-ns
-kubectl get ingress -n todoapp-web-ns
-
-
-# prometheus
-
-
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-
-kubectl create namespace monitoring
-
-cd djangoapp-helm-charts/
-helm install monitoring prometheus-community/kube-prometheus-stack   -n monitoring -f values-monitoring.yaml
-
-
-kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9091:9090
-kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80
