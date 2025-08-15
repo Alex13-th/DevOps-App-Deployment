@@ -1,9 +1,21 @@
 name: Helm CI (simple)
 
 on:
+
   pull_request:
   push:
     branches: [ develop ]
+    paths:
+      - 'djangoapp-helm-charts/**'
+      - 'overlays/**'
+      - 'Bootstrap.sh'
+      - 'script.sh'
+      - '.github/workflows/helm-ci.yml'
+      - '!**/*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   IMAGE_REPO: ghcr.io/alex13-th/devops-app
@@ -38,6 +50,19 @@ jobs:
 
       - name: Render chart (CI values)
         run: helm template test "${CHART_PATH}" -f "${VALUES_CI}" >/dev/null
+
+      - name: Install kube-linter
+        run: |
+          set -eux
+          KUBELINTER_VER=0.6.8
+          curl -fsSL -o kl.tgz https://github.com/stackrox/kube-linter/releases/download/v${KUBELINTER_VER}/kube-linter-linux.tar.gz
+          tar -xzf kl.tgz
+          sudo mv kube-linter /usr/local/bin/kube-linter
+
+      - name: kube-linter (rendered with CI values)
+        run: |
+          helm template test "${CHART_PATH}" -f "${VALUES_CI}" > rendered.yaml
+          kube-linter lint --format=github-actions rendered.yaml
 
   e2e-kind:
     runs-on: ubuntu-latest
