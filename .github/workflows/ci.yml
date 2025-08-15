@@ -7,7 +7,7 @@ on:
 
 env:
   CHART_PATH: ./djangoapp-helm-charts/todoapp-web
-  VALUES_CI: overlays/ci/values-ci.yaml
+  VALUES_CI: ./djangoapp-helm-charts/overlays/ci/values-ci.yaml
   APP_NS: todoapp-web-ns
   APP_DEPLOY: todoapp-deployment
   APP_SVC_NAME: todoapp-web-service
