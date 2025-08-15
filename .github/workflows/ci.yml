@@ -25,6 +25,9 @@ jobs:
         with:
           version: v3.14.4
 
+      - name: Helm deps
+        run: helm dependency update "${CHART_PATH}"
+
       - name: Helm lint
         run: helm lint "${CHART_PATH}"
 
