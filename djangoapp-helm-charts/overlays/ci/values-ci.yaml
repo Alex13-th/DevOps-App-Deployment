@@ -17,8 +17,18 @@ resources:
     cpu: "250m"
     memory: "256Mi"
 
+
+hpa:
+  enabled: false
+
 probes:
-  liveness:
-    initialDelaySeconds: 60
   readiness:
-    initialDelaySeconds: 20
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 6
+  liveness:
+    initialDelaySeconds: 90
+    periodSeconds: 10
+    timeoutSeconds: 3
+
