@@ -1,3 +1,16 @@
+# Bootstrap.sh verification
+
+minikube addons list -> metrics-server and ingress Ready
+ping todoapp.local ->
+kubectl get nodes -> Ready
+kubectl get pods -A -> system pods running
+
+
+
+
+
+
+
 # DevOps-App-Deployment
 
 

@@ -57,8 +57,6 @@ spec:
               port: {{ .Values.containerPort }}
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-      imagePullSecrets:
-        - name: {{ .Values.todoapp.image.pullSecrets }}
       {{- if .Values.persistence.enabled }}
       volumes:
         - name: {{.Values.appLabel}}-data-storage

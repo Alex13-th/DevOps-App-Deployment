@@ -3,7 +3,6 @@ todoapp:
     repository: ghcr.io/alex13-th/devops-app
     tag: "sha-680127a976f28bc44054188346e9442342c11881"
     pullPolicy: IfNotPresent
-    pullSecrets: ghcr-secret
 
 appLabel: todoapp
 namespace: todoapp-web-ns
@@ -21,7 +20,7 @@ ingress:
   host: todoapp.local
 
 serviceAccount:
-  create: false
+  create: true
   name: todoapp-sa
 
 terminationGracePeriodSeconds: 30
@@ -54,7 +53,7 @@ probes:
     periodSeconds: 5
 
 persistence:
-  enabled: true
+  enabled: false
   existingClaim: todoapp-pvc-data
   mountPath: /app/data
 
