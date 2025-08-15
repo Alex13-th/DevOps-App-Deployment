@@ -1,0 +1,24 @@
+replicaCount: 1
+
+persistence:
+  enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: false
+  rules:
+    enabled: false
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+probes:
+  liveness:
+    initialDelaySeconds: 60
+  readiness:
+    initialDelaySeconds: 20
