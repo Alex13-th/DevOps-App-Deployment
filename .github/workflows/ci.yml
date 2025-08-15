@@ -13,7 +13,7 @@ env:
   APP_NS: todoapp-web-ns
   APP_DEPLOY: todoapp-deployment
   APP_SVC_NAME: todoapp-web-service
-  READY_PATH: /api/ready
+  READY_PATH: /api/health
   READY_PORT: "80"
 
 jobs:
@@ -83,6 +83,7 @@ jobs:
             --set todoapp.image.repository=${IMAGE_REPO} \
             --set todoapp.image.tag=${IMAGE_TAG} \
             --set todoapp.image.pullPolicy=IfNotPresent \
+            --set probes.readiness.path=/api/health \
             --wait --timeout 5m
 
       - name: Wait for deployment to be Ready
