@@ -109,7 +109,7 @@ jobs:
       - name: Describe + logs (first app pod)
         if: failure()
         run: |
-          POD=$(kubectl -n "${APP_NS}" get pod -l app=todoapp -o name | head -n1 || true)
+          POD=$(kubectl -n "${APP_NS}" get pod -l app=todoapp-web -o name | head -n1 || true)
           if [ -n "$POD" ]; then
             kubectl -n "${APP_NS}" describe "$POD" | sed -n '/Events/,$p' || true
             kubectl -n "${APP_NS}" logs "$POD" --all-containers --tail=300 || true
