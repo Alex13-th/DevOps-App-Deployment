@@ -151,3 +151,14 @@ vpa:
   enabled: false
   updatePolicy:
     updateMode: "Off"
+
+
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    portName: http
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 5s

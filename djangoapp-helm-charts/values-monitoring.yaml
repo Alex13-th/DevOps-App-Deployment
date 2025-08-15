@@ -1,0 +1,21 @@
+grafana:
+  adminPassword: admin
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelector: {}
+    podMonitorNamespaceSelector: {}
+    probeSelector: {}
+    probeNamespaceSelector: {}
+
+kubeEtcd:
+  enabled: false

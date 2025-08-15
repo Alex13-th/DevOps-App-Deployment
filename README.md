@@ -41,3 +41,19 @@ kubectl get pods -n todoapp-web-ns
 kubectl get pods -n db-ns
 kubectl get pvc -n todoapp-web-ns
 kubectl get ingress -n todoapp-web-ns
+
+
+# prometheus
+
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+kubectl create namespace monitoring
+
+cd djangoapp-helm-charts/
+helm install monitoring prometheus-community/kube-prometheus-stack   -n monitoring -f values-monitoring.yaml
+
+
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9091:9090
+kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80
