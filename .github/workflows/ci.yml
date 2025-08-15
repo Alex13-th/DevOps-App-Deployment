@@ -83,7 +83,7 @@ jobs:
             --set todoapp.image.repository=${IMAGE_REPO} \
             --set todoapp.image.tag=${IMAGE_TAG} \
             --set todoapp.image.pullPolicy=IfNotPresent \
-            --atomic --timeout 10m
+            --wait --timeout 5m
 
       - name: Wait for deployment to be Ready
         run: kubectl -n "${APP_NS}" rollout status deploy/${APP_DEPLOY} --timeout=180s
@@ -99,3 +99,23 @@ jobs:
           kubectl get pods -A -o wide || true
           kubectl -n "${APP_NS}" describe deploy/${APP_DEPLOY} || true
           kubectl -n "${APP_NS}" logs -l app=todoapp --tail=200 --all-containers || true
+
+      - name: Quick status
+        if: failure()
+        run: |
+          kubectl -n "${APP_NS}" get deploy,rs,pods,svc,endpoints -o wide
+          kubectl -n "${APP_NS}" get events --sort-by=.lastTimestamp | tail -n 100 || true
+
+      - name: Describe + logs (first app pod)
+        if: failure()
+        run: |
+          POD=$(kubectl -n "${APP_NS}" get pod -l app=todoapp -o name | head -n1 || true)
+          if [ -n "$POD" ]; then
+            kubectl -n "${APP_NS}" describe "$POD" | sed -n '/Events/,$p' || true
+            kubectl -n "${APP_NS}" logs "$POD" --all-containers --tail=300 || true
+          fi
+
+      - name: Helm status (app)
+        if: failure()
+        run: helm get status todoapp -n "${APP_NS}" || true
+
