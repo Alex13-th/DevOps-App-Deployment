@@ -162,3 +162,8 @@ monitoring:
     path: /metrics
     interval: 15s
     scrapeTimeout: 5s
+  
+  rules:
+    enabled: true
+    namespace: monitoring
+    additionalLabels: {}

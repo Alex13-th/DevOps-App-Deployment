@@ -1,0 +1,48 @@
+{{- if .Values.monitoring.rules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Values.appLabel }}-rules
+  namespace: {{ .Values.monitoring.rules.namespace | default "monitoring" }}
+  labels:
+    release: monitoring
+    app.kubernetes.io/name: {{ .Values.appLabel }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- with .Values.monitoring.rules.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: {{ .Values.appLabel }}.availability
+    rules:
+    - alert: {{ .Values.appLabel | title }}TargetDown
+      expr: up{namespace="{{ .Release.Namespace }}", service="{{ .Values.appLabel }}-web-service"} == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "{{ .Values.appLabel }} target is DOWN"
+        description: "Service {{`{{ $labels.service }}`}} in ns {{`{{ $labels.namespace }}`}} is down for 2m."
+
+  - name: {{ .Values.appLabel }}.stability
+    rules:
+    - alert: {{ .Values.appLabel | title }}PodRestarts
+      expr: increase(kube_pod_container_status_restarts_total{namespace="{{ .Release.Namespace }}", container="{{ .Values.containerName }}"}[10m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Frequent restarts ({{`{{ $labels.pod }}`}})"
+        description: "Container {{ .Values.containerName }} restarted >3 times in 10m."
+
+  - name: {{ .Values.appLabel }}.resource
+    rules:
+    - alert: {{ .Values.appLabel | title }}HighCPU
+      expr: sum(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", pod=~"{{ .Values.appLabel }}-deployment.*", container="{{ .Values.containerName }}"}[5m])) by (pod) > 0.5
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU on {{`{{ $labels.pod }}`}}"
+        description: "CPU usage > 0.5 cores for 10m."
+{{- end }}
