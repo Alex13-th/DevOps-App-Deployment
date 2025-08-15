@@ -62,7 +62,7 @@ jobs:
       - name: kube-linter (rendered with CI values)
         run: |
           helm template test "${CHART_PATH}" -f "${VALUES_CI}" > rendered.yaml
-          kube-linter lint --format=github-actions rendered.yaml
+          kube-linter lint rendered.yaml --format plain
 
   e2e-kind:
     runs-on: ubuntu-latest
