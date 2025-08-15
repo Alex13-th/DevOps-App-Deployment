@@ -1,4 +1,4 @@
-# Local deployment of Django App + DB + monitoring (Helm/K8s/Prometheus) and simple CI on GitHub Actions.
+# Local deployment of Django App + DB + monitoring (Helm/K8s/Prometheus) and CI on GitHub Actions.
 This repository contains the infrastructure for deploying and testing Django App in Kubernetes. It uses a Helm chart for the web service with a sub-chart for the database, monitoring based on kube-prometheus-stack (Prometheus/Grafana/Alertmanager), local scripts for quick start (Bootstrap + deploy), and simple CI in GitHub Actions (lint/chart render, kube‑linter, e2e‑smoke in kind with image preload). The goal is a reproducible local experience and a direct path to the cloud through values overlays (dev/ci/staging/prod).
 
 ## Requirements
