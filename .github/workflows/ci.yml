@@ -54,9 +54,12 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push chart to GHCR
+        if: github.event_name == 'push'
         run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           FILE=$(ls ./artifacts/*.tgz | head -n1)
-          helm push "$FILE" oci://ghcr.io/${{ github.repository_owner }}/charts
+          echo "Pushing $FILE to oci://ghcr.io/${OWNER_LOWER}/charts"
+          helm push "$FILE" oci://ghcr.io/${OWNER_LOWER}/charts
 
       - name: Helm lint
         run: helm lint "${CHART_PATH}"
