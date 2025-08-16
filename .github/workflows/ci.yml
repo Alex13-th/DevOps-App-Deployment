@@ -13,6 +13,10 @@ on:
       - '.github/workflows/ci.yml'
       - '!**/*.md'
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -41,6 +45,18 @@ jobs:
 
       - name: Helm deps
         run: helm dependency update "${CHART_PATH}"
+
+      - name: Package chart
+        run: helm package "${CHART_PATH}" -d ./artifacts
+
+      - name: Login to GHCR
+        if: github.event_name == 'push'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push chart to GHCR
+        run: |
+          FILE=$(ls ./artifacts/*.tgz | head -n1)
+          helm push "$FILE" oci://ghcr.io/${{ github.repository_owner }}/charts
 
       - name: Helm lint
         run: helm lint "${CHART_PATH}"
